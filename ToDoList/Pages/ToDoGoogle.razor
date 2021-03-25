@@ -1,0 +1,148 @@
+﻿@page "/todoGoogle"
+@using TodoList.Data
+@inject ToDoTaskService ToDoTaskService
+
+
+<h1>Задачки из Гугла</h1>
+
+<p>Здесь будут показываться задачки из моих гугл тасков</p>
+@if (tasksList == null)
+{
+    <p><em>На настоящий момент какие либо задачи отсутствуют</em></p>
+
+}
+else
+{
+    <ol>
+        @foreach (var taskList in tasksList)
+        {
+            <li  style="display: inline-table; margin-left: 15px">
+                <BSBasicForm IsInline = "true">
+                    <BSBasicInput InputType="InputType.Text" @bind-Value="@taskList.Title" style="width: 300px; background: orange"></BSBasicInput>
+                    <BSButton @onclick="@(()=>ToDoTaskService.DeleteTaskList(taskList.Id))">X</BSButton>
+                </BSBasicForm>
+                
+                <br>
+                @if (@GetToDoTasksInList(taskList.Id))
+                {
+                    <ul style="margin-left: 0px; padding-left: 0px">
+                        @foreach (var task in tasks)
+                        {
+                            <li style = "list-style-type: none"> 
+                                <BSBasicForm IsInline = "true">
+                                    <BSBasicInput InputType="InputType.Text" @bind-Value="@task.Title" style="width: 300px; background: #2795a3"></BSBasicInput>
+                                    <BSButton style="background-color: #33727a;" @onclick = "@(()=>ToDoTaskService.DeleteTaskFromList(taskList.Id, task.Id))">X</BSButton>
+                                </BSBasicForm>
+                            </li>
+                        }
+                    </ul>
+                }
+                <br>
+                <br>
+
+            </li>
+
+        }
+    </ol>
+
+    <BSButton OnClick="@(() => ModalCreateTask.Show())">Добавить новую задачу</BSButton>
+    <BSButton OnClick="@(() => ModalCreateListTask.Show())">Добавить новый список</BSButton>
+
+    <BSModal @ref="ModalCreateTask">
+        <BSModalHeader @onclick="@(() => ModalCreateTask.Hide())">Новая задача</BSModalHeader>
+        <BSModalBody>
+
+            <div>
+                Выберите в какой список добавить задачу
+                <br />
+
+                @foreach (var item in tasksList)
+                {
+                        <BSButton IsActive="true" @onclick="@(() => selectTaskList = item)">@item.Title</BSButton>
+                        <br>
+                }
+                <p>
+                    <BSBasicInput InputType="InputType.Text" @bind-Value="titleNewTask"></BSBasicInput>
+                </p>
+            </div>
+        </BSModalBody>
+        <BSModalFooter>
+            <BSButton Color="Color.Primary" @onclick="AddNewTaskInList">Добавить</BSButton>
+            <BSButton Color="Color.Secondary" @onclick="@(() => ModalCreateTask.Hide())">Отмена</BSButton>
+        </BSModalFooter>
+    </BSModal>
+
+
+    <BSModal @ref="ModalCreateListTask">
+        <BSModalHeader @onclick="@(() => ModalCreateListTask.Hide())">Новый список</BSModalHeader>
+        <BSModalBody>
+            <div>
+                <p>
+                    <BSBasicInput InputType="InputType.Text" @bind-Value="titleNewListTask"></BSBasicInput>
+                </p>
+            </div>
+        </BSModalBody>
+        <BSModalFooter>
+            <BSButton Color="Color.Primary" @onclick="AddNewListTask">Добавить</BSButton>
+            <BSButton Color="Color.Secondary" @onclick="@(() => ModalCreateListTask.Hide())">Отмена</BSButton>
+        </BSModalFooter>
+    </BSModal>
+
+
+
+}
+
+
+
+
+
+@code{
+    private List<ToDoTask> tasks;
+    private List<ToDoTaskList> tasksList;
+    private ToDoTaskList selectTaskList;
+    //
+    private ToDoTask newTask = new ToDoTask();
+    private string titleNewTask = "Введите название новой задачи";
+    private string titleNewListTask = "Введите название нового списка";
+    //
+    BSModal ModalCreateTask { get; set; }
+    BSModal ModalCreateListTask{get;set;}
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        tasksList = ToDoTaskService.GetToDoTaskLists();
+    }
+
+    private void GetToDoTasksList()
+    {
+        tasksList = ToDoTaskService.GetToDoTaskLists();
+    }
+    private bool GetToDoTasksInList(string id)
+    {
+        tasks = ToDoTaskService.GetToDoTasksInListAsync(id);
+        if (tasks != null)
+        {
+            return true;
+        }
+        else return false;
+
+    }
+
+    private void AddNewTaskInList()
+    {
+        ToDoTaskService.AddNewTaskInList(selectTaskList, titleNewTask);
+        ModalCreateTask.Hide();
+    }
+
+    private void AddNewListTask(){
+        ToDoTaskService.AddNewListTask(titleNewListTask);
+        ModalCreateListTask.Hide();
+    }
+
+    private void onclick(ToDoTaskList e)
+    {
+        selectTaskList = e;
+    }
+
+}
