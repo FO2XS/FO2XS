@@ -1,2 +1,2 @@
 # FO2XS
- It is just my reposiotyr
+ It is just my repository
